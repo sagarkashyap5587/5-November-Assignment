@@ -3,7 +3,7 @@ import jwt, {
   type JwtPayload,
 } from "jsonwebtoken";
 import type { RequestHandler } from "express";
-import type { RedisClientType } from "redis";
+import type { RedisClient } from "../providers/redis/redis.provider.js";
 
 import { ConfigurationFactory } from "../config/configuration.js";
 import { AppError, ERROR_CODES } from "../common/errors.js";
@@ -20,7 +20,7 @@ function isAccessTokenPayload(
 }
 
 export function accessTokenMiddleware(
-  redisClient: RedisClientType,
+  redisClient: RedisClient,
 ): RequestHandler {
   return async (req, _res, next) => {
     try {

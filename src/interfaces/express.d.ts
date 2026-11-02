@@ -1,4 +1,4 @@
-import type { DeviceType } from "../enum/enum.js";
+export type DeviceType = 1 | 2 | 3;
 
 export interface AuthenticatedUser {
   userId: string;
@@ -33,5 +33,3 @@ declare global {
     }
   }
 }
-
-export {};

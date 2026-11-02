@@ -3,11 +3,14 @@ import jwt, {
   type JwtPayload,
 } from "jsonwebtoken";
 import type { RequestHandler } from "express";
-import type { RedisClientType } from "redis";
 
 import { ConfigurationFactory } from "../config/configuration.js";
 import { AppError, ERROR_CODES } from "../common/errors.js";
+import logger from "../logger/logger.js";
+import type { RedisClient } from "../providers/redis/redis.provider.js";
 import type { RefreshTokenPayload } from "../interfaces/express.js";
+
+export type ReuseDetectedHandler = (sessionId: string) => Promise<void>;
 
 function isRefreshTokenPayload(
   payload: string | JwtPayload,
@@ -21,7 +24,8 @@ function isRefreshTokenPayload(
 }
 
 export function refreshTokenMiddleware(
-  redisClient: RedisClientType,
+  redisClient: RedisClient,
+  onReuseDetected?: ReuseDetectedHandler,
 ): RequestHandler {
   return async (req, _res, next) => {
     try {
@@ -86,7 +90,18 @@ export function refreshTokenMiddleware(
       }
 
       if (!storedJti || storedJti !== decoded.jti) {
-      await redisClient.del([sessionKey, refreshKey]);
+        await redisClient.del([sessionKey, refreshKey]);
+
+        if (onReuseDetected) {
+          try {
+            await onReuseDetected(decoded.sid);
+          } catch (error: unknown) {
+            logger.error("Failed to revoke session after token reuse", {
+              sessionId: decoded.sid,
+              error: error instanceof Error ? error.message : "Unknown error",
+            });
+          }
+        }
 
         throw new AppError(
           401,

@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import type { RequestHandler } from "express";
-import type { RedisClientType } from "redis";
+import type { RedisClient } from "../providers/redis/redis.provider.js";
 
 import { AppError, ERROR_CODES } from "../common/errors.js";
 
@@ -31,7 +31,7 @@ function createRateLimitKey(email: string, ip: string): string {
 }
 
 export function loginRateLimitMiddleware(
-  redisClient: RedisClientType,
+  redisClient: RedisClient,
 ): RequestHandler {
   return async (req, _res, next) => {
     try {
@@ -64,7 +64,7 @@ export function loginRateLimitMiddleware(
  * Call this from the auth service after a successful login.
  */
 export async function clearLoginAttempts(
-  redisClient: RedisClientType,
+  redisClient: RedisClient,
   email: string,
   ip: string,
 ): Promise<void> {
